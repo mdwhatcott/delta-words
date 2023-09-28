@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"sort"
@@ -31,7 +30,7 @@ func main() {
 		if strings.Contains(word, " ") {
 			continue
 		}
-		if len(word) == 6 {
+		if len(word) == 7 {
 			candidates = append(candidates, word)
 		}
 	}
@@ -39,28 +38,39 @@ func main() {
 
 	const minOptions = 5
 	goodLetters := set.Make[string](0)
-	for {
-		letters := sortString(candidates[rand.Intn(len(candidates))])
+	spent := set.Make[string](0)
+	for c, candidate := range candidates {
+		if c%1000 == 0 {
+			fmt.Println("PROGRESS:", c, len(candidates))
+		}
+		letters := sortString(candidate)
+		if spent.Contains(letters) {
+			continue
+		}
+		spent.Add(letters)
 		lengths := funcy.SlicedIndexBy(funcy.ByLength[string], lib.FindMatches(letters, dict...))
-		if len(lengths[3]) < minOptions || len(lengths[4]) < minOptions || len(lengths[5]) < minOptions || len(lengths[6]) < minOptions {
+		if len(lengths[3]) < minOptions ||
+			len(lengths[4]) < minOptions ||
+			len(lengths[5]) < minOptions ||
+			len(lengths[6]) < minOptions ||
+			len(lengths[7]) < minOptions {
 			continue
 		}
 		fmt.Println()
 		fmt.Println("LETTERS:", letters)
-		for _, match := range lengths[6] {
+		for _, match := range lengths[7] {
 			fmt.Println(match)
 		}
 		if ui.NoYes(fmt.Sprintf("%d/%d - Keep?", goodLetters.Len(), 10)) {
 			goodLetters.Add(letters)
 		}
 		if goodLetters.Len() == 10 {
-			result := goodLetters.Slice()
-			sort.Strings(result)
-			fmt.Println(result)
 			break
-
 		}
 	}
+	result := goodLetters.Slice()
+	sort.Strings(result)
+	fmt.Println(result)
 }
 
 func sortString(s string) string {
